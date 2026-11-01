@@ -27,6 +27,7 @@ add_library(dpi_core STATIC
     src/capture_windivert.cpp
     src/capture_afxdp.cpp
     src/capture_pcap.cpp
+    src/process_resolver.cpp
 )
 
 target_include_directories(dpi_core PUBLIC
@@ -35,8 +36,12 @@ target_include_directories(dpi_core PUBLIC
 
 # Platform libraries
 if(WIN32)
-    target_link_libraries(dpi_core PUBLIC ws2_32)
+    target_link_libraries(dpi_core PUBLIC ws2_32 iphlpapi)
 endif()
+
+# Live Monitor CLI Utility
+add_executable(dpi_monitor src/monitor.cpp)
+target_link_libraries(dpi_monitor PRIVATE dpi_core)
 
 # Unit Tests
 if(BUILD_TESTS)
@@ -57,6 +62,10 @@ if(BUILD_TESTS)
     add_executable(test_dpi_l7 tests/test_dpi_l7.cpp)
     target_link_libraries(test_dpi_l7 PRIVATE dpi_core)
     add_test(NAME test_dpi_l7 COMMAND test_dpi_l7)
+
+    add_executable(test_process_filter tests/test_process_filter.cpp)
+    target_link_libraries(test_process_filter PRIVATE dpi_core)
+    add_test(NAME test_process_filter COMMAND test_process_filter)
 endif()
 
 # Benchmarks

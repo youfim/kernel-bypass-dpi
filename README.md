@@ -133,10 +133,25 @@ cmake --build build --config Release --parallel
 ctest --test-dir build -C Release --output-on-failure
 ```
 
+### Running Live Request Monitor CLI (C++)
+
+```powershell
+# Run live monitor (captures outbound DNS, HTTP, TLS)
+.\build\Release\dpi_monitor.exe
+
+# Filter live traffic specifically for Chrome or Telegram
+.\build\Release\dpi_monitor.exe --app chrome.exe
+.\build\Release\dpi_monitor.exe --app telegram.exe
+
+# Filter by Process ID or path substring
+.\build\Release\dpi_monitor.exe --pid 14220
+.\build\Release\dpi_monitor.exe --path Discord
+```
+
 ### Running C++ High-Throughput Benchmark
 
 ```powershell
-.\build\benchmarks\Release\bench_pcap_replay.exe 5000000
+.\build\Release\bench_pcap_replay.exe 5000000
 ```
 
 ### Building & Installing Python Module
@@ -160,17 +175,18 @@ dpi::ParsedPacket pkt;
 if (dpi::PacketParser::parse(raw_bytes, timestamp_ns, pkt)) {
     dpi::FlowDirection dir;
     auto flow = table.process_packet(pkt, dir);
+    // flow->process.name ("chrome.exe"), flow->process.pid (1234)
 }
 ```
 
-### Python 5-Line DPI Streamer
+### Python 5-Line DPI Streamer with Application Filter
 
 ```python
 from dpi_engine import SnifferStream, DpiFilter, Proto
 
-sniffer = SnifferStream("traffic.pcap", is_pcap=True)
-filt = DpiFilter().proto(Proto.TCP).port(443)
-for pkt in sniffer.stream_packets():
-    if filt.matches(pkt):
-        print(f"{pkt.src_ip}:{pkt.src_port} -> {pkt.dst_ip}:{pkt.dst_port}")
+# Stream requests specifically originating from Chrome
+sniffer = SnifferStream(app="chrome.exe")
+for req in sniffer.stream_requests():
+    print(f"[{req['time']}] {req['app']} ({req['pid']}) -> {req['domain']} ({req['proto']})")
 ```
+

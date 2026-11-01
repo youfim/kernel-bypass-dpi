@@ -4,6 +4,7 @@
 #include "protocols/tls.hpp"
 #include "protocols/dns.hpp"
 #include "protocols/http.hpp"
+#include "process_resolver.hpp"
 
 #include <cstdint>
 #include <cstring>
@@ -85,6 +86,9 @@ struct FlowRecord {
     std::string                             http_uri;
     std::string                             http_method;
     std::string                             http_user_agent;
+
+    // Associated process
+    ProcessInfo                             process;
 
     FlowRecord(const FlowKey& k, uint64_t ts)
         : key(k), start_time_ns(ts), last_seen_ns(ts) {}

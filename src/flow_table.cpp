@@ -87,7 +87,20 @@ std::shared_ptr<FlowRecord> FlowTable::process_packet(const ParsedPacket& pkt, F
 
         if (!record) {
             record = std::make_shared<FlowRecord>(key, pkt.timestamp_ns);
+            ProcessInfo pinfo = ProcessResolver::instance().resolve(pkt.src_port(), key.protocol, key.is_ipv6 != 0);
+            if (!pinfo.is_valid()) {
+                pinfo = ProcessResolver::instance().resolve(pkt.dst_port(), key.protocol, key.is_ipv6 != 0);
+            }
+            record->process = std::move(pinfo);
             stripe.entries.push_back(BucketEntry{key, record});
+        } else if (!record->process.is_valid()) {
+            ProcessInfo pinfo = ProcessResolver::instance().resolve(pkt.src_port(), key.protocol, key.is_ipv6 != 0);
+            if (!pinfo.is_valid()) {
+                pinfo = ProcessResolver::instance().resolve(pkt.dst_port(), key.protocol, key.is_ipv6 != 0);
+            }
+            if (pinfo.is_valid()) {
+                record->process = std::move(pinfo);
+            }
         }
     }
 
