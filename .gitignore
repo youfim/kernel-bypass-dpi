@@ -1,0 +1,45 @@
+# Build directories
+build/
+bin/
+lib/
+out/
+x64/
+Debug/
+Release/
+.vs/
+*.obj
+*.o
+*.exe
+*.dll
+*.so
+*.dylib
+*.pyd
+*.lib
+*.a
+*.pdb
+*.ilk
+*.exp
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+dist/
+wheel/
+.venv/
+venv/
+
+# Drivers & System artifacts
+*.sys
+*.cer
+*.cat
+*.inf.bak
+
+# IDE & Editor
+.idea/
+.vscode/
+*.swp
+*.swo

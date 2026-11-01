@@ -1,0 +1,20 @@
+[build-system]
+requires = ["scikit-build-core>=0.10.0", "nanobind>=2.0.0"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "dpi-engine"
+version = "1.0.0"
+description = "Kernel-Bypass Network Engine & DPI Streamer"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Vladimir Dunaev", email = "youfim1337@gmail.com"}
+]
+dependencies = []
+
+[tool.scikit-build]
+cmake.version = ">=3.20"
+cmake.build-type = "Release"
+wheel.packages = ["python/dpi_engine"]
