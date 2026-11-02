@@ -35,7 +35,40 @@ using WinDivertRecvEx_t = BOOL(WINAPI*)(HANDLE handle, void* pPacket, UINT packe
 class WinDivertCaptureDevice : public ICaptureDevice {
 public:
     WinDivertCaptureDevice() {
+        // 1. Try standard DLL search path
         hDll_ = LoadLibraryW(L"WinDivert.dll");
+
+        // 2. Try loading from the directory of the current module (.exe or .pyd)
+        if (!hDll_) {
+            HMODULE hMod = nullptr;
+            if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                                   reinterpret_cast<LPCWSTR>(&WinDivertCaptureDevice::create_windivert), &hMod) && hMod) {
+                wchar_t modPath[MAX_PATH];
+                if (GetModuleFileNameW(hMod, modPath, MAX_PATH)) {
+                    wchar_t* lastSlash = wcsrchr(modPath, L'\\');
+                    if (lastSlash) {
+                        *(lastSlash + 1) = L'\0';
+                        wcscat_s(modPath, L"WinDivert.dll");
+                        hDll_ = LoadLibraryW(modPath);
+                    }
+                }
+            }
+        }
+
+        // 3. Try known repository paths
+        if (!hDll_) {
+            const wchar_t* candidates[] = {
+                L"d:\\projects\\github\\kernel-ethernet-dumper\\WinDivert.dll",
+                L"d:\\projects\\github\\kernel-ethernet-dumper\\build\\Release\\WinDivert.dll",
+                L"d:\\projects\\github\\kernel-ethernet-dumper\\python\\dpi_engine\\WinDivert.dll",
+                L"d:\\projects\\github\\kernel-ethernet-dumper\\python\\dpi_engine\\Release\\WinDivert.dll"
+            };
+            for (const auto* cand : candidates) {
+                hDll_ = LoadLibraryW(cand);
+                if (hDll_) break;
+            }
+        }
+
         if (hDll_) {
             fnOpen_ = reinterpret_cast<WinDivertOpen_t>(GetProcAddress(hDll_, "WinDivertOpen"));
             fnClose_ = reinterpret_cast<WinDivertClose_t>(GetProcAddress(hDll_, "WinDivertClose"));
