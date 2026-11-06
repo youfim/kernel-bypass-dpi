@@ -55,12 +55,13 @@ def main():
             elif req.get("http_method"):
                 details = f"{req['http_method']} {req.get('http_uri', '')[:30]}"
 
+            target_endpoint = f"{req['target_ip']}:{req['target_port']}" if req.get('target_ip') else f":{req['target_port']}"
             print("{:<12} \033[32m{:<18}\033[0m {}{:<8}\033[0m {:<30} \033[1;35m{:<28}\033[0m {}".format(
                 req["time"],
                 app_str[:17],
                 proto_color,
                 req["proto"],
-                f"port:{req['target_port']}",
+                target_endpoint[:29],
                 req["domain"][:27],
                 details
             ))

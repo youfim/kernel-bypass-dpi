@@ -160,9 +160,9 @@ ProcessInfo ProcessResolver::resolve(uint16_t local_port, uint8_t protocol, bool
         }
     }
 
-    // 2. Cache expired or not found: refresh under write lock
+    // 2. Cache expired or not found: refresh under write lock (throttle to max 10 refreshes/sec)
     std::unique_lock<std::shared_mutex> write_lock(mutex_);
-    if (now - last_refresh_ >= std::chrono::milliseconds(1000)) {
+    if (now - last_refresh_ >= std::chrono::milliseconds(100)) {
         refresh_tables_windows();
     }
 

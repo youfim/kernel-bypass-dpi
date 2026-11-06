@@ -17,6 +17,8 @@ if sys.platform == "win32":
         pkg_dir.parent.parent,
     ]
     for d in search_dirs:
+        if d.exists() and str(d) not in sys.path:
+            sys.path.insert(0, str(d))
         if (d / "WinDivert.dll").exists():
             try:
                 os.add_dll_directory(str(d))

@@ -64,6 +64,7 @@ public:
         const std::string lower_name = detail::to_lower(proc.name);
         for (const auto& ex_app : excluded_apps_) {
             if (lower_name == ex_app) return false;
+            if (ex_app.find('.') == std::string::npos && (lower_name == ex_app + ".exe")) return false;
         }
 
         // 2. Check inclusions (if empty, matches everything not excluded)
@@ -78,6 +79,7 @@ public:
 
         for (const auto& in_app : included_apps_) {
             if (lower_name == in_app) return true;
+            if (in_app.find('.') == std::string::npos && (lower_name == in_app + ".exe")) return true;
         }
 
         if (!included_path_substrings_.empty() && !proc.path.empty()) {

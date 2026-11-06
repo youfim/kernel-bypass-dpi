@@ -86,6 +86,8 @@ struct FlowRecord {
     std::string                             http_uri;
     std::string                             http_method;
     std::string                             http_user_agent;
+    std::string                             server_ip;
+    uint16_t                                server_port{0};
 
     // Associated process
     ProcessInfo                             process;

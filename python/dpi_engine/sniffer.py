@@ -5,7 +5,10 @@ from datetime import datetime
 try:
     import _dpi_engine
 except ImportError:
-    _dpi_engine = None
+    try:
+        from . import _dpi_engine
+    except ImportError:
+        _dpi_engine = None
 
 
 class SnifferStream:
@@ -89,12 +92,11 @@ class SnifferStream:
 
         for pkt in self.stream_packets():
             for flow in self.get_flows():
-                fid = (flow.key.src_port, flow.key.dst_port, flow.key.protocol)
-                if fid in seen_flows:
-                    continue
-
                 domain = flow.sni or flow.dns_query or flow.http_host
                 if domain:
+                    fid = (flow.key.src_port, flow.key.dst_port, flow.key.protocol, domain)
+                    if fid in seen_flows:
+                        continue
                     seen_flows.add(fid)
                     ts = datetime.fromtimestamp(flow.last_seen_ns / 1e9).strftime("%H:%M:%S.%f")[:-3]
                     req_type = "TLS" if flow.sni else ("DNS" if flow.dns_query else "HTTP")
@@ -104,7 +106,8 @@ class SnifferStream:
                         "pid": flow.pid,
                         "path": flow.app_path,
                         "proto": req_type,
-                        "target_port": flow.key.dst_port,
+                        "target_ip": flow.server_ip or flow.key.dst_ip,
+                        "target_port": flow.server_port or flow.key.dst_port,
                         "domain": domain,
                         "ja3": flow.ja3,
                         "http_method": flow.http_method,

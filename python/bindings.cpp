@@ -93,11 +93,27 @@ public:
                 // 1. TLS ClientHello
                 if (!flow->tls_meta.has_value() && pkt.is_tcp() && (pkt.dst_port() == 443 || pkt.src_port() == 443)) {
                     flow->tls_meta = dpi::protocols::parse_tls_client_hello(pkt.payload);
+                    if (flow->tls_meta.has_value()) {
+                        if (pkt.l3_proto == dpi::L3Protocol::IPV4 && pkt.ipv4) {
+                            flow->server_ip = pkt.ipv4->dst_ip.to_string();
+                        } else if (pkt.l3_proto == dpi::L3Protocol::IPV6 && pkt.ipv6) {
+                            flow->server_ip = pkt.ipv6->dst_ip.to_string();
+                        }
+                        flow->server_port = pkt.dst_port();
+                    }
                 }
 
                 // 2. DNS
                 if (!flow->dns_meta.has_value() && pkt.is_udp() && (pkt.dst_port() == 53 || pkt.src_port() == 53)) {
                     flow->dns_meta = dpi::protocols::parse_dns_message(pkt.payload);
+                    if (flow->dns_meta.has_value()) {
+                        if (pkt.l3_proto == dpi::L3Protocol::IPV4 && pkt.ipv4) {
+                            flow->server_ip = pkt.ipv4->dst_ip.to_string();
+                        } else if (pkt.l3_proto == dpi::L3Protocol::IPV6 && pkt.ipv6) {
+                            flow->server_ip = pkt.ipv6->dst_ip.to_string();
+                        }
+                        flow->server_port = pkt.dst_port();
+                    }
                 }
 
                 // 3. HTTP
@@ -108,6 +124,12 @@ public:
                         flow->http_uri = std::string(req->uri);
                         flow->http_host = std::string(req->host);
                         flow->http_user_agent = std::string(req->user_agent);
+                        if (pkt.l3_proto == dpi::L3Protocol::IPV4 && pkt.ipv4) {
+                            flow->server_ip = pkt.ipv4->dst_ip.to_string();
+                        } else if (pkt.l3_proto == dpi::L3Protocol::IPV6 && pkt.ipv6) {
+                            flow->server_ip = pkt.ipv6->dst_ip.to_string();
+                        }
+                        flow->server_port = pkt.dst_port();
                     }
                 }
             }
@@ -176,6 +198,28 @@ NB_MODULE(_dpi_engine, m) {
         .def_ro("dst_port", &dpi::FlowKey::dst_port)
         .def_ro("protocol", &dpi::FlowKey::protocol)
         .def_ro("is_ipv6", &dpi::FlowKey::is_ipv6)
+        .def_prop_ro("src_ip", [](const dpi::FlowKey& k) {
+            if (k.is_ipv6) {
+                dpi::protocols::Ipv6Address addr{};
+                std::memcpy(addr.bytes, k.src_ip, 16);
+                return addr.to_string();
+            } else {
+                dpi::protocols::Ipv4Address addr{};
+                std::memcpy(addr.bytes, k.src_ip, 4);
+                return addr.to_string();
+            }
+        })
+        .def_prop_ro("dst_ip", [](const dpi::FlowKey& k) {
+            if (k.is_ipv6) {
+                dpi::protocols::Ipv6Address addr{};
+                std::memcpy(addr.bytes, k.dst_ip, 16);
+                return addr.to_string();
+            } else {
+                dpi::protocols::Ipv4Address addr{};
+                std::memcpy(addr.bytes, k.dst_ip, 4);
+                return addr.to_string();
+            }
+        })
         .def("__repr__", &dpi::FlowKey::to_string);
 
     nb::class_<dpi::FlowRecord>(m, "FlowRecord")
@@ -248,6 +292,14 @@ NB_MODULE(_dpi_engine, m) {
         .def_prop_ro("http_method", [](dpi::FlowRecord& r) -> std::optional<std::string> {
             std::lock_guard<std::mutex> lock(r.l7_mutex);
             return r.http_method.empty() ? std::nullopt : std::make_optional(r.http_method);
+        })
+        .def_prop_ro("server_ip", [](dpi::FlowRecord& r) -> std::string {
+            std::lock_guard<std::mutex> lock(r.l7_mutex);
+            return r.server_ip;
+        })
+        .def_prop_ro("server_port", [](dpi::FlowRecord& r) -> uint16_t {
+            std::lock_guard<std::mutex> lock(r.l7_mutex);
+            return r.server_port;
         });
 
     nb::class_<PyPacketView>(m, "PacketView")

@@ -11,17 +11,81 @@ bool PacketParser::parse(std::span<const uint8_t> raw_bytes,
     out.raw_data = raw_bytes;
 
     const size_t total_len = raw_bytes.size();
-    if (total_len < sizeof(protocols::EthernetHeader)) {
+    if (total_len < 20) {
         return false;
     }
 
-    // 1. L2 Layer: Ethernet II
-    out.eth = reinterpret_cast<const protocols::EthernetHeader*>(raw_bytes.data());
-    uint16_t next_type = out.eth->type();
-    size_t offset = sizeof(protocols::EthernetHeader);
+    size_t offset = 0;
+    uint16_t next_type = 0;
+    bool is_ethernet = false;
+
+    // Check if packet starts with an Ethernet II header
+    if (total_len >= sizeof(protocols::EthernetHeader)) {
+        const auto* eth = reinterpret_cast<const protocols::EthernetHeader*>(raw_bytes.data());
+        const uint16_t candidate_type = eth->type();
+
+        if (candidate_type == protocols::ethertype::IPV4) {
+            // In Ethernet IPv4, byte 14 is the start of IPv4 header (ver=4, ihl>=5)
+            if (total_len >= 14 + sizeof(protocols::Ipv4Header)) {
+                const auto* ip = reinterpret_cast<const protocols::Ipv4Header*>(raw_bytes.data() + 14);
+                if (ip->version() == 4 && ip->ihl() >= 5) {
+                    is_ethernet = true;
+                    out.eth = eth;
+                    next_type = candidate_type;
+                    offset = 14;
+                }
+            }
+        } else if (candidate_type == protocols::ethertype::IPV6) {
+            // In Ethernet IPv6, byte 14 is the start of IPv6 header (ver=6)
+            if (total_len >= 14 + sizeof(protocols::Ipv6Header)) {
+                const auto* ip6 = reinterpret_cast<const protocols::Ipv6Header*>(raw_bytes.data() + 14);
+                if (ip6->version() == 6) {
+                    is_ethernet = true;
+                    out.eth = eth;
+                    next_type = candidate_type;
+                    offset = 14;
+                }
+            }
+        } else if (candidate_type == protocols::ethertype::VLAN || candidate_type == protocols::ethertype::QINQ) {
+            if (total_len >= 14 + sizeof(protocols::VlanHeader)) {
+                is_ethernet = true;
+                out.eth = eth;
+                next_type = candidate_type;
+                offset = 14;
+            }
+        } else if (candidate_type == protocols::ethertype::ARP) {
+            is_ethernet = true;
+            out.eth = eth;
+            next_type = candidate_type;
+            offset = 14;
+        }
+    }
+
+    // If not an Ethernet frame, detect Raw IPv4 / IPv6 (e.g. from WinDivert or Raw IP PCAP)
+    if (!is_ethernet) {
+        const uint8_t ip_ver = (raw_bytes[0] >> 4) & 0x0F;
+        if (ip_ver == 4) {
+            const auto* ip = reinterpret_cast<const protocols::Ipv4Header*>(raw_bytes.data());
+            if (ip->ihl() >= 5 && total_len >= sizeof(protocols::Ipv4Header)) {
+                next_type = protocols::ethertype::IPV4;
+                offset = 0;
+            } else {
+                return false;
+            }
+        } else if (ip_ver == 6) {
+            if (total_len >= sizeof(protocols::Ipv6Header)) {
+                next_type = protocols::ethertype::IPV6;
+                offset = 0;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
 
     // 2. 802.1Q / QinQ VLAN handling
-    if (next_type == protocols::ethertype::VLAN || next_type == protocols::ethertype::QINQ) {
+    if (is_ethernet && (next_type == protocols::ethertype::VLAN || next_type == protocols::ethertype::QINQ)) {
         if (offset + sizeof(protocols::VlanHeader) > total_len) {
             return false;
         }

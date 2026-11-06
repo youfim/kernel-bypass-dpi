@@ -112,28 +112,21 @@ public:
             return 0;
         }
 
-        size_t count = 0;
-        const size_t max_packets = out_slots.size();
+        auto& slot = out_slots[0];
+        UINT recv_len = 0;
+        WINDIVERT_ADDRESS addr{};
 
-        for (size_t i = 0; i < max_packets; ++i) {
-            auto& slot = out_slots[i];
-            UINT recv_len = 0;
-            WINDIVERT_ADDRESS addr{};
-
-            if (fnRecv_(handle_, slot.data, PACKET_BUFFER_SIZE, &recv_len, &addr)) {
-                slot.length = recv_len;
-                slot.interface_id = static_cast<uint16_t>(addr.IfIdx);
-                const auto now = std::chrono::steady_clock::now().time_since_epoch();
-                slot.timestamp_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
-                stats_.packets_received++;
-                stats_.bytes_received += recv_len;
-                count++;
-            } else {
-                break; // No more packets immediately available
-            }
+        if (fnRecv_(handle_, slot.data, PACKET_BUFFER_SIZE, &recv_len, &addr)) {
+            slot.length = recv_len;
+            slot.interface_id = static_cast<uint16_t>(addr.IfIdx);
+            const auto now = std::chrono::steady_clock::now().time_since_epoch();
+            slot.timestamp_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
+            stats_.packets_received++;
+            stats_.bytes_received += recv_len;
+            return 1;
         }
 
-        return count;
+        return 0;
     }
 
     [[nodiscard]] CaptureStats get_stats() const override {
