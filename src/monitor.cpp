@@ -63,13 +63,13 @@ void print_banner() {
               << "----------------------------------------------------------------------------------------\n";
 }
 
-} // namespace
+}
 
 int main(int argc, char* argv[]) {
     std::signal(SIGINT, signal_handler);
 
 #if defined(_WIN32)
-    // Enable ANSI virtual terminal processing on Windows console
+
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD dwMode = 0;
     if (GetConsoleMode(hOut, &dwMode)) {
@@ -81,7 +81,6 @@ int main(int argc, char* argv[]) {
     std::string pcap_file;
     std::string custom_filter = "outbound && (tcp.DstPort == 80 || tcp.DstPort == 443 || udp.DstPort == 53)";
 
-    // Parse command line arguments
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--app" && i + 1 < argc) {
@@ -142,7 +141,7 @@ int main(int argc, char* argv[]) {
         size_t n = capture->receive_batch(batch);
         if (n == 0) {
             if (!pcap_file.empty()) {
-                break; // Replay completed
+                break;
             }
 #if defined(_WIN32)
             Sleep(5);
@@ -163,12 +162,10 @@ int main(int argc, char* argv[]) {
             auto flow = table.process_packet(pkt, dir);
             if (!flow) continue;
 
-            // Apply process filter
             if (filter.has_rules() && !filter.matches(flow->process)) {
                 continue;
             }
 
-            // Inspect L7 payload for TLS, DNS, HTTP
             if (!pkt.payload.empty()) {
                 std::lock_guard<std::mutex> lock(flow->l7_mutex);
 
@@ -183,7 +180,6 @@ int main(int argc, char* argv[]) {
                     ? (flow->process.name + " [" + std::to_string(flow->process.pid) + "]")
                     : "Unknown";
 
-                // 1. TLS ClientHello
                 if (!flow->tls_meta.has_value() && pkt.is_tcp() && (pkt.dst_port() == 443 || pkt.src_port() == 443)) {
                     flow->tls_meta = dpi::protocols::parse_tls_client_hello(pkt.payload);
                     if (flow->tls_meta.has_value() && !flow->tls_meta->sni.empty()) {
@@ -197,7 +193,6 @@ int main(int argc, char* argv[]) {
                     }
                 }
 
-                // 2. DNS Query / Answer
                 if (!flow->dns_meta.has_value() && pkt.is_udp() && (pkt.dst_port() == 53 || pkt.src_port() == 53)) {
                     auto dns = dpi::protocols::parse_dns_message(pkt.payload);
                     if (dns.has_value()) {
@@ -218,7 +213,6 @@ int main(int argc, char* argv[]) {
                     }
                 }
 
-                // 3. HTTP Request
                 if (flow->http_method.empty() && pkt.is_tcp()) {
                     auto req = dpi::protocols::parse_http_request(pkt.payload);
                     if (req.has_value()) {

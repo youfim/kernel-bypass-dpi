@@ -16,25 +16,21 @@ void test_process_filter_rules() {
     dpi::ProcessInfo discord{3003, "Discord.exe", "C:\\Users\\User\\AppData\\Local\\Discord\\app-1.0.9000\\Discord.exe"};
     dpi::ProcessInfo svchost{4004, "svchost.exe", "C:\\Windows\\System32\\svchost.exe"};
 
-    // 1. App name inclusion (case-insensitive)
     dpi::ProcessFilter f1;
     f1.include_app("Chrome.EXE");
     assert(f1.matches(chrome));
     assert(!f1.matches(telegram));
 
-    // 2. PID inclusion
     dpi::ProcessFilter f2;
     f2.include_pid(2002);
     assert(f2.matches(telegram));
     assert(!f2.matches(chrome));
 
-    // 3. Path substring inclusion
     dpi::ProcessFilter f3;
     f3.include_path_contains("discord");
     assert(f3.matches(discord));
     assert(!f3.matches(chrome));
 
-    // 4. Exclusion overrides
     dpi::ProcessFilter f4;
     f4.exclude_app("svchost.exe");
     assert(!f4.matches(svchost));

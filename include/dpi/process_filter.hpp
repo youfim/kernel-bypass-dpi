@@ -17,13 +17,12 @@ inline std::string to_lower(std::string_view s) {
     }
     return res;
 }
-} // namespace detail
+}
 
 class ProcessFilter {
 public:
     ProcessFilter() = default;
 
-    // Inclusion rules (if any is specified, match requires matching at least one)
     ProcessFilter& include_app(std::string_view exe_name) {
         included_apps_.push_back(detail::to_lower(exe_name));
         return *this;
@@ -39,7 +38,6 @@ public:
         return *this;
     }
 
-    // Exclusion rules (if any matches, rejected)
     ProcessFilter& exclude_app(std::string_view exe_name) {
         excluded_apps_.push_back(detail::to_lower(exe_name));
         return *this;
@@ -52,11 +50,10 @@ public:
 
     [[nodiscard]] bool matches(const ProcessInfo& proc) const {
         if (!proc.is_valid()) {
-            // If no process filter is configured, allow unknown processes
+
             return included_apps_.empty() && included_pids_.empty() && included_path_substrings_.empty();
         }
 
-        // 1. Check exclusions first
         for (uint32_t ex_pid : excluded_pids_) {
             if (proc.pid == ex_pid) return false;
         }
@@ -67,7 +64,6 @@ public:
             if (ex_app.find('.') == std::string::npos && (lower_name == ex_app + ".exe")) return false;
         }
 
-        // 2. Check inclusions (if empty, matches everything not excluded)
         const bool has_inclusions = !included_apps_.empty() || !included_pids_.empty() || !included_path_substrings_.empty();
         if (!has_inclusions) {
             return true;
@@ -107,4 +103,4 @@ private:
     std::vector<uint32_t>    excluded_pids_;
 };
 
-} // namespace dpi
+}

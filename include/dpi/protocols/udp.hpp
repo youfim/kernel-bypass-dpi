@@ -34,4 +34,4 @@ struct UdpHeader {
 
 static_assert(sizeof(UdpHeader) == 8, "UdpHeader must be exactly 8 bytes");
 
-} // namespace dpi::protocols
+}

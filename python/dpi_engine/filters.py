@@ -1,12 +1,10 @@
 from enum import IntEnum
 from typing import Callable, Any, Optional
 
-
 class Proto(IntEnum):
     ICMP = 1
     TCP = 6
     UDP = 17
-
 
 class DpiFilter:
     """

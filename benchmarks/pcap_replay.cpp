@@ -18,16 +18,15 @@ int main(int argc, char* argv[]) {
     std::cout << "  Iterations: " << iterations << " packets" << std::endl;
     std::cout << "==========================================================" << std::endl;
 
-    // Pre-craft sample Ethernet II + IPv4 + TCP packet (64 bytes)
     std::vector<uint8_t> sample_packet = {
         0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0x08, 0x00,
         0x45, 0x00, 0x00, 0x32, 0x10, 0x01, 0x40, 0x00, 0x40, 0x06, 0x00, 0x00,
         192, 168, 1, 100,
         1, 1, 1, 1,
-        0xd4, 0x31, 0x01, 0xbb, // 54321 -> 443
+        0xd4, 0x31, 0x01, 0xbb,
         0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
         0x50, 0x02, 0xfa, 0xf0, 0x00, 0x00, 0x00, 0x00,
-        // 10 bytes payload
+
         0x16, 0x03, 0x01, 0x00, 0x05, 0x01, 0x00, 0x00, 0x01, 0x00
     };
 
@@ -40,7 +39,7 @@ int main(int argc, char* argv[]) {
     auto start_time = std::chrono::steady_clock::now();
 
     for (size_t i = 0; i < iterations; ++i) {
-        // Vary source port slightly to populate flow table
+
         uint16_t dynamic_port = static_cast<uint16_t>(1024 + (i & 0x3FFF));
         sample_packet[34] = static_cast<uint8_t>(dynamic_port >> 8);
         sample_packet[35] = static_cast<uint8_t>(dynamic_port & 0xFF);

@@ -56,4 +56,4 @@ struct HttpRequest {
 
 std::optional<HttpRequest> parse_http_request(std::span<const uint8_t> payload);
 
-} // namespace dpi::protocols
+}

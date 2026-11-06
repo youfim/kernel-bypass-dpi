@@ -73,4 +73,4 @@ namespace dpi::protocols {
     return is_little_endian() ? bswap64(val) : val;
 }
 
-} // namespace dpi::protocols
+}

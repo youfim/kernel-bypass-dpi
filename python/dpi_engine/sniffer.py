@@ -10,7 +10,6 @@ except ImportError:
     except ImportError:
         _dpi_engine = None
 
-
 class SnifferStream:
     """
     High-level generator interface streaming packets, application flows, and L7 requests.

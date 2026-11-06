@@ -13,7 +13,6 @@ def main():
         return
 
     print("Native module loaded. Initializing stream...")
-    # Benchmarking stream iterator performance
     filter_rule = DpiFilter().proto(Proto.TCP).port(443)
     print("Filter initialized: TCP on port 443.")
     print("==========================================================")

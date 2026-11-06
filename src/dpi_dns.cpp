@@ -16,7 +16,6 @@ std::optional<DnsMessage> parse_dns_message(std::span<const uint8_t> payload) {
 
     size_t offset = sizeof(DnsHeader);
 
-    // 1. Questions section
     const uint16_t q_count = hdr->question_count();
     msg.questions.reserve(q_count);
 
@@ -40,7 +39,6 @@ std::optional<DnsMessage> parse_dns_message(std::span<const uint8_t> payload) {
         msg.questions.push_back(std::move(q));
     }
 
-    // 2. Answers section (if response)
     const uint16_t a_count = hdr->answer_count();
     msg.answers.reserve(a_count);
 
@@ -71,7 +69,6 @@ std::optional<DnsMessage> parse_dns_message(std::span<const uint8_t> payload) {
             break;
         }
 
-        // Format RDATA based on record type
         if (ans.type == dns_type::A && rdlen == 4) {
             char ip_buf[16];
             std::snprintf(ip_buf, sizeof(ip_buf), "%u.%u.%u.%u",
@@ -105,4 +102,4 @@ std::optional<DnsMessage> parse_dns_message(std::span<const uint8_t> payload) {
     return msg;
 }
 
-} // namespace dpi::protocols
+}

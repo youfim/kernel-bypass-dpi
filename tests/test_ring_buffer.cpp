@@ -17,7 +17,7 @@ void test_ring_basic() {
         assert(ok);
     }
     assert(ring.full());
-    assert(!ring.try_emplace(999)); // Should fail when full
+    assert(!ring.try_emplace(999));
 
     uint64_t val = 0;
     for (uint64_t i = 1; i <= 7; ++i) {
@@ -45,7 +45,7 @@ void test_ring_multithreaded_throughput() {
         for (uint64_t i = 1; i <= TOTAL_PACKETS; ++i) {
             dpi::PacketSlot* slot = nullptr;
             while ((slot = ring->claim_write_slot()) == nullptr) {
-                // Yield CPU while ring is full
+
                 std::this_thread::yield();
             }
             slot->timestamp_ns = i;

@@ -49,6 +49,6 @@ namespace ethertype {
     constexpr uint16_t VLAN  = 0x8100;
     constexpr uint16_t IPV6  = 0x86DD;
     constexpr uint16_t QINQ  = 0x88A8;
-} // namespace ethertype
+}
 
-} // namespace dpi::protocols
+}

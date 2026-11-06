@@ -24,7 +24,6 @@ std::pair<FlowKey, FlowDirection> FlowKey::from_packet(const ParsedPacket& pkt) 
     key.src_port = pkt.src_port();
     key.dst_port = pkt.dst_port();
 
-    // Canonical ordering: min(src_endpoint, dst_endpoint)
     const size_t ip_len = key.is_ipv6 ? 16 : 4;
     int cmp = std::memcmp(key.src_ip, key.dst_ip, ip_len);
     if (cmp == 0) {
@@ -35,7 +34,7 @@ std::pair<FlowKey, FlowDirection> FlowKey::from_packet(const ParsedPacket& pkt) 
     if (cmp <= 0) {
         return {key, FlowDirection::FORWARD};
     } else {
-        // Swap endpoints to normalize
+
         FlowKey canonical = key;
         std::swap_ranges(canonical.src_ip, canonical.src_ip + 16, canonical.dst_ip);
         std::swap(canonical.src_port, canonical.dst_port);
@@ -60,7 +59,7 @@ std::string FlowKey::to_string() const {
     return ss.str();
 }
 
-FlowTable::FlowTable(size_t /*bucket_count*/, size_t num_stripes)
+FlowTable::FlowTable(size_t , size_t num_stripes)
     : num_stripes_(num_stripes > 0 ? num_stripes : 64),
       stripes_(num_stripes_) {}
 
@@ -104,7 +103,6 @@ std::shared_ptr<FlowRecord> FlowTable::process_packet(const ParsedPacket& pkt, F
         }
     }
 
-    // Update statistics without holding the stripe lock
     record->last_seen_ns.store(pkt.timestamp_ns, std::memory_order_relaxed);
     const uint64_t bytes = pkt.raw_data.size();
 
@@ -116,7 +114,6 @@ std::shared_ptr<FlowRecord> FlowTable::process_packet(const ParsedPacket& pkt, F
         record->rev_bytes.fetch_add(bytes, std::memory_order_relaxed);
     }
 
-    // Advance TCP State
     if (pkt.is_tcp() && pkt.tcp) {
         const auto* tcp = pkt.tcp;
         TcpState current_state = record->tcp_state.load(std::memory_order_relaxed);
@@ -153,7 +150,7 @@ size_t FlowTable::evict_expired(uint64_t current_time_ns,
             const uint64_t age_ns = (current_time_ns >= last_seen) ? (current_time_ns - last_seen) : 0;
 
             bool expire = false;
-            if (it->key.protocol == 6) { // TCP
+            if (it->key.protocol == 6) {
                 const TcpState st = rec->tcp_state.load(std::memory_order_relaxed);
                 if (st == TcpState::CLOSED || st == TcpState::RESET) {
                     expire = (age_ns >= 10ULL * 1'000'000'000ULL); // 10s for closed/reset

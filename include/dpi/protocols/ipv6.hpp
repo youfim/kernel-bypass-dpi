@@ -39,12 +39,12 @@ struct Ipv6Address {
 };
 
 struct Ipv6Header {
-    uint32_t    ver_tc_flow;  // Version (4) + Traffic Class (8) + Flow Label (20)
-    uint16_t    payload_len;  // Length of payload (excluding 40-byte IPv6 header)
-    uint8_t     next_header;  // Next header protocol (TCP, UDP, Hop-by-Hop, etc.)
-    uint8_t     hop_limit;    // Hop limit
-    Ipv6Address src_ip;       // Source address
-    Ipv6Address dst_ip;       // Destination address
+    uint32_t    ver_tc_flow;
+    uint16_t    payload_len;
+    uint8_t     next_header;
+    uint8_t     hop_limit;
+    Ipv6Address src_ip;
+    Ipv6Address dst_ip;
 
     [[nodiscard]] uint8_t version() const noexcept {
         return static_cast<uint8_t>((ntoh32(ver_tc_flow) >> 28) & 0x0F);
@@ -75,6 +75,6 @@ namespace ipv6_extension {
     constexpr uint8_t AH          = 51;
     constexpr uint8_t NONE        = 59;
     constexpr uint8_t DEST_OPTS   = 60;
-} // namespace ipv6_extension
+}
 
-} // namespace dpi::protocols
+}

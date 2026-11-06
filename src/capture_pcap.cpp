@@ -95,7 +95,6 @@ public:
                 break;
             }
 
-            // Skip remaining bytes if truncated to buffer size
             if (cap_len > read_bytes) {
                 file_.seekg(cap_len - read_bytes, std::ios::cur);
             }

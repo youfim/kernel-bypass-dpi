@@ -8,7 +8,6 @@ namespace dpi::protocols {
 
 namespace {
 
-// Standalone RFC 1321 MD5 implementation for zero-dependency JA3 hashing
 struct MD5Context {
     uint32_t state[4];
     uint32_t count[2];
@@ -36,7 +35,6 @@ inline void md5_transform(uint32_t state[4], const uint8_t block[64]) {
     #define STEP3(a, b, c, d, k, s, i) { a += H(b, c, d) + k + i; a = ROTLEFT(a, s) + b; }
     #define STEP4(a, b, c, d, k, s, i) { a += I(b, c, d) + k + i; a = ROTLEFT(a, s) + b; }
 
-    // Round 1
     STEP1(a, b, c, d, x[0], 7, 0xd76aa478);   STEP1(d, a, b, c, x[1], 12, 0xe8c7b756);
     STEP1(c, d, a, b, x[2], 17, 0x242070db);  STEP1(b, c, d, a, x[3], 22, 0xc1bdceee);
     STEP1(a, b, c, d, x[4], 7, 0xf57c0faf);   STEP1(d, a, b, c, x[5], 12, 0x4787c62a);
@@ -46,7 +44,6 @@ inline void md5_transform(uint32_t state[4], const uint8_t block[64]) {
     STEP1(a, b, c, d, x[12], 7, 0x6b901122);  STEP1(d, a, b, c, x[13], 12, 0xfd987193);
     STEP1(c, d, a, b, x[14], 17, 0xa679438e); STEP1(b, c, d, a, x[15], 22, 0x49b40821);
 
-    // Round 2
     STEP2(a, b, c, d, x[1], 5, 0xf61e2562);   STEP2(d, a, b, c, x[6], 9, 0xc040b340);
     STEP2(c, d, a, b, x[11], 14, 0x265e5a51); STEP2(b, c, d, a, x[0], 20, 0xe9b6c7aa);
     STEP2(a, b, c, d, x[5], 5, 0xd62f105d);   STEP2(d, a, b, c, x[10], 9, 0x02441453);
@@ -56,7 +53,6 @@ inline void md5_transform(uint32_t state[4], const uint8_t block[64]) {
     STEP2(a, b, c, d, x[13], 5, 0xa9e3e905);  STEP2(d, a, b, c, x[2], 9, 0xfcefa3f8);
     STEP2(c, d, a, b, x[7], 14, 0x676f02d9);  STEP2(b, c, d, a, x[12], 20, 0x8d2a4c8a);
 
-    // Round 3
     STEP3(a, b, c, d, x[5], 4, 0xfffa3942);   STEP3(d, a, b, c, x[8], 11, 0x8771f681);
     STEP3(c, d, a, b, x[11], 16, 0x6d9d6122); STEP3(b, c, d, a, x[14], 23, 0xfde5380c);
     STEP3(a, b, c, d, x[1], 4, 0xa4beea44);   STEP3(d, a, b, c, x[4], 11, 0x4bdecfa9);
@@ -66,7 +62,6 @@ inline void md5_transform(uint32_t state[4], const uint8_t block[64]) {
     STEP3(a, b, c, d, x[9], 4, 0xd9d4d039);   STEP3(d, a, b, c, x[12], 11, 0xe6db99e5);
     STEP3(c, d, a, b, x[15], 16, 0x1fa27cf8); STEP3(b, c, d, a, x[2], 23, 0xc4ac5665);
 
-    // Round 4
     STEP4(a, b, c, d, x[0], 6, 0xf4292244);   STEP4(d, a, b, c, x[7], 10, 0x432aff97);
     STEP4(c, d, a, b, x[14], 15, 0xab9423a7); STEP4(b, c, d, a, x[5], 21, 0xfc93a039);
     STEP4(a, b, c, d, x[12], 6, 0x655b59c3);  STEP4(d, a, b, c, x[3], 10, 0x8f0ccc92);
@@ -131,7 +126,6 @@ std::string compute_md5_hex(const std::string& input) {
     size_t pad_index = (ctx.count[0] >> 3) & 63;
     size_t pad_len = (pad_index < 56) ? (56 - pad_index) : (120 - pad_index);
 
-    // Padding step
     size_t pindex = (ctx.count[0] >> 3) & 63;
     size_t ppart = 64 - pindex;
     if (pad_len >= ppart) {
@@ -146,7 +140,6 @@ std::string compute_md5_hex(const std::string& input) {
     }
     std::memcpy(&ctx.buffer[pindex], &padding[i], pad_len - i);
 
-    // Append bits length
     for (int j = 0; j < 8; ++j) {
         ctx.buffer[56 + j] = bits_buf[j];
     }
@@ -167,12 +160,11 @@ std::string compute_md5_hex(const std::string& input) {
     return ss.str();
 }
 
-// GREASE values check (RFC 8701)
 inline bool is_grease(uint16_t val) noexcept {
     return (val & 0x0F0F) == 0x0A0A && ((val >> 8) == (val & 0xFF));
 }
 
-} // namespace
+}
 
 std::optional<TlsClientHello> parse_tls_client_hello(std::span<const uint8_t> payload) {
     if (payload.size() < sizeof(TlsRecordHeader) + sizeof(TlsHandshakeHeader)) {
@@ -204,7 +196,6 @@ std::optional<TlsClientHello> parse_tls_client_hello(std::span<const uint8_t> pa
     std::memcpy(hello.random, payload.data() + offset, 32);
     offset += 32;
 
-    // Session ID
     if (offset >= payload.size()) return std::nullopt;
     const uint8_t session_id_len = payload[offset++];
     if (offset + session_id_len > payload.size()) return std::nullopt;
@@ -213,7 +204,6 @@ std::optional<TlsClientHello> parse_tls_client_hello(std::span<const uint8_t> pa
         offset += session_id_len;
     }
 
-    // Cipher Suites
     if (offset + 2 > payload.size()) return std::nullopt;
     uint16_t cipher_len_raw;
     std::memcpy(&cipher_len_raw, payload.data() + offset, 2);
@@ -228,14 +218,12 @@ std::optional<TlsClientHello> parse_tls_client_hello(std::span<const uint8_t> pa
     }
     offset += cipher_len;
 
-    // Compression Methods
     if (offset >= payload.size()) return std::nullopt;
     const uint8_t comp_len = payload[offset++];
     if (offset + comp_len > payload.size()) return std::nullopt;
     hello.compression_methods.assign(payload.data() + offset, payload.data() + offset + comp_len);
     offset += comp_len;
 
-    // Extensions
     if (offset + 2 <= payload.size()) {
         uint16_t ext_total_len_raw;
         std::memcpy(&ext_total_len_raw, payload.data() + offset, 2);
@@ -265,7 +253,7 @@ std::optional<TlsClientHello> parse_tls_client_hello(std::span<const uint8_t> pa
                         uint16_t name_list_len_raw;
                         std::memcpy(&name_list_len_raw, ext_ptr, 2);
                         const uint8_t name_type = ext_ptr[2];
-                        if (name_type == 0) { // host_name
+                        if (name_type == 0) {
                             uint16_t name_len_raw;
                             std::memcpy(&name_len_raw, ext_ptr + 3, 2);
                             const uint16_t name_len = ntoh16(name_len_raw);
@@ -335,11 +323,9 @@ std::optional<TlsClientHello> parse_tls_client_hello(std::span<const uint8_t> pa
         }
     }
 
-    // JA3 string construction: SSLVersion,Ciphers,Extensions,EllipticCurves,EllipticCurvePointFormats
     std::ostringstream ja3;
     ja3 << hello.client_version << ",";
 
-    // Ciphers (excluding GREASE)
     bool first = true;
     for (uint16_t c : hello.cipher_suites) {
         if (!is_grease(c)) {
@@ -350,7 +336,6 @@ std::optional<TlsClientHello> parse_tls_client_hello(std::span<const uint8_t> pa
     }
     ja3 << ",";
 
-    // Extensions (excluding GREASE)
     first = true;
     for (uint16_t e : hello.extension_types) {
         if (!is_grease(e)) {
@@ -361,7 +346,6 @@ std::optional<TlsClientHello> parse_tls_client_hello(std::span<const uint8_t> pa
     }
     ja3 << ",";
 
-    // Elliptic Curves (Supported Groups, excluding GREASE)
     first = true;
     for (uint16_t g : hello.supported_groups) {
         if (!is_grease(g)) {
@@ -372,7 +356,6 @@ std::optional<TlsClientHello> parse_tls_client_hello(std::span<const uint8_t> pa
     }
     ja3 << ",";
 
-    // EC Point Formats
     first = true;
     for (uint8_t f : hello.ec_point_formats) {
         if (!first) ja3 << "-";
@@ -386,4 +369,4 @@ std::optional<TlsClientHello> parse_tls_client_hello(std::span<const uint8_t> pa
     return hello;
 }
 
-} // namespace dpi::protocols
+}

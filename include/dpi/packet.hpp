@@ -46,26 +46,22 @@ struct ParsedPacket {
     uint64_t timestamp_ns{0};
     std::span<const uint8_t> raw_data;
 
-    // L2 Layer
     const protocols::EthernetHeader* eth{nullptr};
     const protocols::VlanHeader*     vlan{nullptr};
-    const protocols::VlanHeader*     inner_vlan{nullptr}; // For QinQ
+    const protocols::VlanHeader*     inner_vlan{nullptr};
     uint16_t                         l3_offset{0};
 
-    // L3 Layer
     L3Protocol                       l3_proto{L3Protocol::UNKNOWN};
     const protocols::Ipv4Header*     ipv4{nullptr};
     const protocols::Ipv6Header*     ipv6{nullptr};
     uint16_t                         l4_offset{0};
 
-    // L4 Layer
     L4Protocol                       l4_proto{L4Protocol::UNKNOWN};
     const protocols::TcpHeader*      tcp{nullptr};
     const protocols::UdpHeader*      udp{nullptr};
     std::optional<protocols::TcpOptions> tcp_options;
     uint16_t                         payload_offset{0};
 
-    // L7 Payload
     std::span<const uint8_t>         payload;
 
     [[nodiscard]] bool is_valid() const noexcept {
@@ -93,4 +89,4 @@ struct ParsedPacket {
     }
 };
 
-} // namespace dpi
+}

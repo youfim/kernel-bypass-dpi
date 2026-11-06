@@ -14,8 +14,8 @@ struct TcpHeader {
     uint16_t dst_port;
     uint32_t seq_num;
     uint32_t ack_num;
-    uint8_t  data_off_res; // Data offset (4 bits) + Reserved (4 bits)
-    uint8_t  flags;        // CWR, ECE, URG, ACK, PSH, RST, SYN, FIN
+    uint8_t  data_off_res;
+    uint8_t  flags;
     uint16_t win_size;
     uint16_t checksum;
     uint16_t urg_ptr;
@@ -56,7 +56,6 @@ struct TcpHeader {
         return ntoh16(urg_ptr);
     }
 
-    // Flag helpers
     [[nodiscard]] bool fin() const noexcept { return (flags & 0x01) != 0; }
     [[nodiscard]] bool syn() const noexcept { return (flags & 0x02) != 0; }
     [[nodiscard]] bool rst() const noexcept { return (flags & 0x04) != 0; }
@@ -85,41 +84,41 @@ struct TcpOptions {
 
         while (idx < len) {
             const uint8_t kind = options_bytes[idx++];
-            if (kind == 0) { // End of option list (EOL)
+            if (kind == 0) {
                 break;
             }
-            if (kind == 1) { // No-Operation (NOP)
+            if (kind == 1) {
                 continue;
             }
             if (idx >= len) {
-                break; // Malformed option length
+                break;
             }
             const uint8_t opt_len = options_bytes[idx++];
             if (opt_len < 2 || idx + (opt_len - 2) > len) {
-                break; // Invalid option length
+                break;
             }
             const size_t data_len = opt_len - 2;
             const uint8_t* data = &options_bytes[idx];
 
             switch (kind) {
-                case 2: // Maximum Segment Size (MSS)
+                case 2:
                     if (data_len == 2) {
                         uint16_t raw_val;
                         std::memcpy(&raw_val, data, 2);
                         opts.mss = ntoh16(raw_val);
                     }
                     break;
-                case 3: // Window Scale
+                case 3:
                     if (data_len == 1) {
                         opts.window_scale = data[0];
                     }
                     break;
-                case 4: // SACK Permitted
+                case 4:
                     if (data_len == 0) {
                         opts.sack_permitted = true;
                     }
                     break;
-                case 8: // Timestamps
+                case 8:
                     if (data_len == 8) {
                         uint32_t ts_val, ts_ecr;
                         std::memcpy(&ts_val, data, 4);
@@ -137,4 +136,4 @@ struct TcpOptions {
     }
 };
 
-} // namespace dpi::protocols
+}

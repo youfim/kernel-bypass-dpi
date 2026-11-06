@@ -17,7 +17,7 @@ inline bool case_insensitive_equals(std::string_view a, std::string_view b) noex
     return true;
 }
 
-} // namespace
+}
 
 std::optional<HttpRequest> parse_http_request(std::span<const uint8_t> payload) {
     if (payload.size() < 10) {
@@ -26,7 +26,6 @@ std::optional<HttpRequest> parse_http_request(std::span<const uint8_t> payload) 
 
     std::string_view text(reinterpret_cast<const char*>(payload.data()), payload.size());
 
-    // 1. Locate end of first line (\r\n)
     size_t line_end = text.find("\r\n");
     if (line_end == std::string_view::npos) {
         return std::nullopt;
@@ -34,7 +33,6 @@ std::optional<HttpRequest> parse_http_request(std::span<const uint8_t> payload) 
 
     std::string_view req_line = text.substr(0, line_end);
 
-    // 2. Parse Method
     size_t sp1 = req_line.find(' ');
     if (sp1 == std::string_view::npos) {
         return std::nullopt;
@@ -53,10 +51,9 @@ std::optional<HttpRequest> parse_http_request(std::span<const uint8_t> payload) 
     else if (method_str == "TRACE") req.method = HttpMethod::TRACE;
     else if (method_str == "PATCH") req.method = HttpMethod::PATCH;
     else {
-        return std::nullopt; // Not a recognized HTTP request method
+        return std::nullopt;
     }
 
-    // 3. Parse URI & Version
     size_t sp2 = req_line.find(' ', sp1 + 1);
     if (sp2 == std::string_view::npos) {
         req.uri = req_line.substr(sp1 + 1);
@@ -66,7 +63,6 @@ std::optional<HttpRequest> parse_http_request(std::span<const uint8_t> payload) 
         req.version = req_line.substr(sp2 + 1);
     }
 
-    // 4. Scan Headers
     size_t cur = line_end + 2;
     while (cur < text.size()) {
         size_t next_line = text.find("\r\n", cur);
@@ -74,7 +70,7 @@ std::optional<HttpRequest> parse_http_request(std::span<const uint8_t> payload) 
             break;
         }
 
-        if (next_line == cur) { // Double \r\n marks end of HTTP headers
+        if (next_line == cur) {
             cur += 2;
             if (cur < text.size()) {
                 req.body = payload.subspan(cur);
@@ -114,4 +110,4 @@ std::optional<HttpRequest> parse_http_request(std::span<const uint8_t> payload) 
     return req;
 }
 
-} // namespace dpi::protocols
+}

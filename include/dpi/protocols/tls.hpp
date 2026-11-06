@@ -12,7 +12,7 @@ namespace dpi::protocols {
 #pragma pack(push, 1)
 
 struct TlsRecordHeader {
-    uint8_t  content_type; // 22 = Handshake, 20 = ChangeCipherSpec, 21 = Alert, 23 = ApplicationData
+    uint8_t  content_type;
     uint16_t legacy_version;
     uint16_t length;
 
@@ -22,7 +22,7 @@ struct TlsRecordHeader {
 };
 
 struct TlsHandshakeHeader {
-    uint8_t  msg_type; // 1 = ClientHello, 2 = ServerHello, etc.
+    uint8_t  msg_type;
     uint8_t  length_high;
     uint16_t length_low;
 
@@ -45,7 +45,6 @@ struct TlsClientHello {
     std::vector<uint16_t> cipher_suites;
     std::vector<uint8_t>  compression_methods;
 
-    // Extracted Extensions
     std::string           sni;
     std::vector<std::string> alpn;
     std::vector<uint16_t> supported_groups;
@@ -53,9 +52,8 @@ struct TlsClientHello {
     std::vector<uint16_t> signature_algorithms;
     std::vector<uint16_t> extension_types;
 
-    // Fingerprints
     std::string ja3_string;
-    std::string ja3_hash; // MD5 digest
+    std::string ja3_hash;
     std::string ja4_string;
 };
 
@@ -72,8 +70,8 @@ namespace tls_extension {
     constexpr uint16_t SESSION_TICKET         = 0x0023;
     constexpr uint16_t SUPPORTED_VERSIONS     = 0x002B;
     constexpr uint16_t KEY_SHARE              = 0x0033;
-} // namespace tls_extension
+}
 
 std::optional<TlsClientHello> parse_tls_client_hello(std::span<const uint8_t> payload);
 
-} // namespace dpi::protocols
+}

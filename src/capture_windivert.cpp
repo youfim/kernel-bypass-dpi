@@ -35,10 +35,9 @@ using WinDivertRecvEx_t = BOOL(WINAPI*)(HANDLE handle, void* pPacket, UINT packe
 class WinDivertCaptureDevice : public ICaptureDevice {
 public:
     WinDivertCaptureDevice() {
-        // 1. Try standard DLL search path
+
         hDll_ = LoadLibraryW(L"WinDivert.dll");
 
-        // 2. Try loading from the directory of the current module (.exe or .pyd)
         if (!hDll_) {
             HMODULE hMod = nullptr;
             if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
@@ -55,7 +54,6 @@ public:
             }
         }
 
-        // 3. Try known repository paths
         if (!hDll_) {
             const wchar_t* candidates[] = {
                 L"d:\\projects\\github\\kernel-ethernet-dumper\\WinDivert.dll",
@@ -91,7 +89,7 @@ public:
         }
 
         const char* filter_str = filter.empty() ? "true" : filter.c_str();
-        // Layer 0 = WINDIVERT_LAYER_NETWORK, Flags 1 = WINDIVERT_FLAG_SNIFF
+
         handle_ = fnOpen_(filter_str, 0, 0, 1);
         if (handle_ == INVALID_HANDLE_VALUE) {
             std::cerr << "[WinDivert] WinDivertOpen failed with error code: " << GetLastError() << std::endl;
@@ -147,7 +145,7 @@ std::unique_ptr<ICaptureDevice> ICaptureDevice::create_windivert() {
     return std::make_unique<WinDivertCaptureDevice>();
 }
 
-} // namespace dpi
+}
 
 #else
 
@@ -165,6 +163,6 @@ std::unique_ptr<ICaptureDevice> ICaptureDevice::create_windivert() {
     return std::make_unique<NullWinDivertDevice>();
 }
 
-} // namespace dpi
+}
 
 #endif

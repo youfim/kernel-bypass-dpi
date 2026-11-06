@@ -18,19 +18,19 @@ public:
     ~AfXdpCaptureDevice() override { close(); }
 
     bool open(const std::string& ifname) override {
-        // High-level AF_XDP socket setup via UMEM mmap and XSK
+
         std::cout << "[AF_XDP] Initializing UMEM rings on interface: " << ifname << std::endl;
         interface_name_ = ifname;
-        // In full Linux deployment: xsk_umem__create & xsk_socket__create
+
         return true;
     }
 
     void close() override {
-        // Release UMEM buffer and close xsk socket
+
     }
 
     size_t receive_batch(std::span<PacketSlot> out_slots) override {
-        // Dequeue descriptors from XSK RX ring, copy/swap buffers, replenish Fill ring
+
         return 0;
     }
 
@@ -47,7 +47,7 @@ std::unique_ptr<ICaptureDevice> ICaptureDevice::create_afxdp() {
     return std::make_unique<AfXdpCaptureDevice>();
 }
 
-} // namespace dpi
+}
 
 #else
 
@@ -68,6 +68,6 @@ std::unique_ptr<ICaptureDevice> ICaptureDevice::create_afxdp() {
     return std::make_unique<NullAfXdpDevice>();
 }
 
-} // namespace dpi
+}
 
 #endif

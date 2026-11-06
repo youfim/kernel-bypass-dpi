@@ -31,7 +31,7 @@ std::string wstring_to_utf8(const std::wstring& wstr) {
     return str;
 }
 
-} // namespace
+}
 
 ProcessResolver& ProcessResolver::instance() {
     static ProcessResolver resolver;
@@ -71,7 +71,6 @@ void ProcessResolver::refresh_tables_windows() {
     std::unordered_map<uint32_t, uint32_t> new_tcp;
     std::unordered_map<uint32_t, uint32_t> new_udp;
 
-    // 1. Query IPv4 TCP Table with Owner PID
     ULONG table_size = 0;
     GetExtendedTcpTable(nullptr, &table_size, FALSE, AF_INET, TCP_TABLE_OWNER_PID_ALL, 0);
     if (table_size > 0) {
@@ -86,7 +85,6 @@ void ProcessResolver::refresh_tables_windows() {
         }
     }
 
-    // 2. Query IPv4 UDP Table with Owner PID
     table_size = 0;
     GetExtendedUdpTable(nullptr, &table_size, FALSE, AF_INET, UDP_TABLE_OWNER_PID, 0);
     if (table_size > 0) {
@@ -101,7 +99,6 @@ void ProcessResolver::refresh_tables_windows() {
         }
     }
 
-    // 3. Query IPv6 TCP Table with Owner PID
     table_size = 0;
     GetExtendedTcpTable(nullptr, &table_size, FALSE, AF_INET6, TCP_TABLE_OWNER_PID_ALL, 0);
     if (table_size > 0) {
@@ -116,7 +113,6 @@ void ProcessResolver::refresh_tables_windows() {
         }
     }
 
-    // 4. Query IPv6 UDP Table with Owner PID
     table_size = 0;
     GetExtendedUdpTable(nullptr, &table_size, FALSE, AF_INET6, UDP_TABLE_OWNER_PID, 0);
     if (table_size > 0) {
@@ -141,10 +137,9 @@ void ProcessResolver::refresh_cache() {
     refresh_tables_windows();
 }
 
-ProcessInfo ProcessResolver::resolve(uint16_t local_port, uint8_t protocol, bool /*is_ipv6*/) {
+ProcessInfo ProcessResolver::resolve(uint16_t local_port, uint8_t protocol, bool ) {
     const auto now = std::chrono::steady_clock::now();
 
-    // 1. Try read lock
     {
         std::shared_lock<std::shared_mutex> read_lock(mutex_);
         if (now - last_refresh_ < std::chrono::milliseconds(1000)) {
@@ -160,7 +155,6 @@ ProcessInfo ProcessResolver::resolve(uint16_t local_port, uint8_t protocol, bool
         }
     }
 
-    // 2. Cache expired or not found: refresh under write lock (throttle to max 10 refreshes/sec)
     std::unique_lock<std::shared_mutex> write_lock(mutex_);
     if (now - last_refresh_ >= std::chrono::milliseconds(100)) {
         refresh_tables_windows();
@@ -183,7 +177,7 @@ ProcessInfo ProcessResolver::resolve(uint16_t local_port, uint8_t protocol, bool
     return info;
 }
 
-} // namespace dpi
+}
 
 #else
 
@@ -208,6 +202,6 @@ ProcessInfo ProcessResolver::resolve(uint16_t, uint8_t, bool) {
     return {0, "", ""};
 }
 
-} // namespace dpi
+}
 
 #endif

@@ -81,16 +81,13 @@ public:
             auto flow = flow_table_->process_packet(pkt, dir);
             if (!flow) continue;
 
-            // Apply process filter
             if (filter_.has_rules() && !filter_.matches(flow->process)) {
                 continue;
             }
 
-            // DPI Inspection on first packet with payload
             if (!pkt.payload.empty()) {
                 std::lock_guard<std::mutex> lock(flow->l7_mutex);
 
-                // 1. TLS ClientHello
                 if (!flow->tls_meta.has_value() && pkt.is_tcp() && (pkt.dst_port() == 443 || pkt.src_port() == 443)) {
                     flow->tls_meta = dpi::protocols::parse_tls_client_hello(pkt.payload);
                     if (flow->tls_meta.has_value()) {
@@ -103,7 +100,6 @@ public:
                     }
                 }
 
-                // 2. DNS
                 if (!flow->dns_meta.has_value() && pkt.is_udp() && (pkt.dst_port() == 53 || pkt.src_port() == 53)) {
                     flow->dns_meta = dpi::protocols::parse_dns_message(pkt.payload);
                     if (flow->dns_meta.has_value()) {
@@ -116,7 +112,6 @@ public:
                     }
                 }
 
-                // 3. HTTP
                 if (flow->http_method.empty() && pkt.is_tcp()) {
                     auto req = dpi::protocols::parse_http_request(pkt.payload);
                     if (req.has_value()) {

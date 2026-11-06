@@ -15,10 +15,10 @@ namespace dpi::protocols {
 struct DnsHeader {
     uint16_t id;
     uint16_t flags;
-    uint16_t qdcount; // Number of questions
-    uint16_t ancount; // Number of answers
-    uint16_t nscount; // Number of authority records
-    uint16_t arcount; // Number of additional records
+    uint16_t qdcount;
+    uint16_t ancount;
+    uint16_t nscount;
+    uint16_t arcount;
 
     [[nodiscard]] uint16_t transaction_id() const noexcept { return ntoh16(id); }
     [[nodiscard]] uint16_t raw_flags() const noexcept { return ntoh16(flags); }
@@ -51,7 +51,7 @@ namespace dns_type {
     constexpr uint16_t AAAA  = 28;
     constexpr uint16_t SRV   = 33;
     constexpr uint16_t HTTPS = 65;
-} // namespace dns_type
+}
 
 struct DnsQuestion {
     std::string name;
@@ -64,7 +64,7 @@ struct DnsAnswer {
     uint16_t    type{0};
     uint16_t    rr_class{0};
     uint32_t    ttl{0};
-    std::string data; // Formatted IPv4, IPv6, or domain name (CNAME/PTR)
+    std::string data;
 };
 
 struct DnsMessage {
@@ -75,7 +75,6 @@ struct DnsMessage {
     std::vector<DnsAnswer>   answers;
 };
 
-// Zero-copy label decompression helper
 inline bool decode_dns_name(std::span<const uint8_t> packet_payload,
                             size_t& offset,
                             std::string& out_name,
@@ -90,7 +89,7 @@ inline bool decode_dns_name(std::span<const uint8_t> packet_payload,
     while (curr_pos < total_size) {
         const uint8_t len = packet_payload[curr_pos];
         if (len == 0) {
-            // End of domain name
+
             if (jumped) {
                 offset = jump_back_pos;
             } else {
@@ -99,13 +98,12 @@ inline bool decode_dns_name(std::span<const uint8_t> packet_payload,
             return true;
         }
 
-        // Pointer: top two bits set (0xC0)
         if ((len & 0xC0) == 0xC0) {
             if (curr_pos + 1 >= total_size) {
                 return false;
             }
             if (jumps++ >= max_jumps) {
-                return false; // Loop detected
+                return false;
             }
             if (!jumped) {
                 jump_back_pos = curr_pos + 2;
@@ -119,7 +117,6 @@ inline bool decode_dns_name(std::span<const uint8_t> packet_payload,
             continue;
         }
 
-        // Standard label
         curr_pos++;
         if (curr_pos + len > total_size) {
             return false;
@@ -143,4 +140,4 @@ inline bool decode_dns_name(std::span<const uint8_t> packet_payload,
 
 std::optional<DnsMessage> parse_dns_message(std::span<const uint8_t> payload);
 
-} // namespace dpi::protocols
+}

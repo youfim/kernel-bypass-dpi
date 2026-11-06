@@ -56,7 +56,6 @@ struct FlowKey {
         return h;
     }
 
-    // Creates canonical representation and returns whether original was forward or reverse
     static std::pair<FlowKey, FlowDirection> from_packet(const ParsedPacket& pkt) noexcept;
 
     [[nodiscard]] std::string to_string() const;
@@ -69,16 +68,13 @@ struct FlowRecord {
     uint64_t start_time_ns{0};
     std::atomic<uint64_t> last_seen_ns{0};
 
-    // Counters
     std::atomic<uint64_t> fwd_packets{0};
     std::atomic<uint64_t> fwd_bytes{0};
     std::atomic<uint64_t> rev_packets{0};
     std::atomic<uint64_t> rev_bytes{0};
 
-    // TCP State
     std::atomic<TcpState> tcp_state{TcpState::NONE};
 
-    // L7 Metadata
     std::mutex l7_mutex;
     std::optional<protocols::TlsClientHello> tls_meta;
     std::optional<protocols::DnsMessage>    dns_meta;
@@ -89,7 +85,6 @@ struct FlowRecord {
     std::string                             server_ip;
     uint16_t                                server_port{0};
 
-    // Associated process
     ProcessInfo                             process;
 
     FlowRecord(const FlowKey& k, uint64_t ts)
@@ -101,10 +96,8 @@ public:
     explicit FlowTable(size_t bucket_count = 65536, size_t num_stripes = 64);
     ~FlowTable() = default;
 
-    // Process a packet: lookup or insert flow, update counters, handle TCP state
     std::shared_ptr<FlowRecord> process_packet(const ParsedPacket& pkt, FlowDirection& out_dir);
 
-    // Evict flows that exceeded idle timeouts
     size_t evict_expired(uint64_t current_time_ns,
                          uint64_t tcp_timeout_ns = 300ULL * 1'000'000'000ULL,
                          uint64_t udp_timeout_ns = 30ULL * 1'000'000'000ULL);
@@ -128,4 +121,4 @@ private:
     std::vector<Stripe> stripes_;
 };
 
-} // namespace dpi
+}

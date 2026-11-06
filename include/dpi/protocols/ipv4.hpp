@@ -40,16 +40,16 @@ struct Ipv4Address {
 };
 
 struct Ipv4Header {
-    uint8_t     ver_ihl;          // Version (4 bits) + IHL (4 bits)
-    uint8_t     tos;              // Type of service (DSCP + ECN)
-    uint16_t    total_len;        // Total packet length (header + payload)
-    uint16_t    id;               // Identification
-    uint16_t    flags_frag_off;   // Flags (3 bits) + Fragment offset (13 bits)
-    uint8_t     ttl;              // Time to live
-    uint8_t     protocol;         // Upper layer protocol (TCP=6, UDP=17, ICMP=1)
-    uint16_t    checksum;         // Header checksum
-    Ipv4Address src_ip;           // Source IP address
-    Ipv4Address dst_ip;           // Destination IP address
+    uint8_t     ver_ihl;
+    uint8_t     tos;
+    uint16_t    total_len;
+    uint16_t    id;
+    uint16_t    flags_frag_off;
+    uint8_t     ttl;
+    uint8_t     protocol;
+    uint16_t    checksum;
+    Ipv4Address src_ip;
+    Ipv4Address dst_ip;
 
     [[nodiscard]] uint8_t version() const noexcept {
         return ver_ihl >> 4;
@@ -97,7 +97,7 @@ struct Ipv4Header {
         uint32_t sum = 0;
 
         for (size_t i = 0; i < word_count; ++i) {
-            if (i == 5) continue; // Skip existing checksum field (bytes 10-11)
+            if (i == 5) continue;
             sum += ntoh16(words[i]);
         }
 
@@ -121,6 +121,6 @@ namespace ip_protocol {
     constexpr uint8_t ICMP = 1;
     constexpr uint8_t TCP  = 6;
     constexpr uint8_t UDP  = 17;
-} // namespace ip_protocol
+}
 
-} // namespace dpi::protocols
+}
